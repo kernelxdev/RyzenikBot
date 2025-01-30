@@ -57,8 +57,10 @@ async def on_message(message):
         levels[user_id]['xp'] += random.randint(5, 15)
         level, remaining_xp = calculate_level(levels[user_id]['xp'])
 
+        """
         if level > 1 and remaining_xp < required_xp(level - 1):
             await message.channel.send(f"{message.author.mention} awansował/a na poziom {level}!")
+        """
 
         save_levels()
 
