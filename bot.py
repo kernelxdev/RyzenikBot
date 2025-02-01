@@ -96,6 +96,37 @@ async def leaderboard(interaction: discord.Interaction):
     await interaction.response.send_message(leaderboard_text, ephemeral=False)
 
 
+@bot.tree.command(name="wyjebsimona", description="Wyjeb simona na 1 minutę z czatu")
+@app_commands.default_permissions(moderate_members=True)
+async def wyjebsimona(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.moderate_members:
+        await interaction.response.send_message("Nie masz uprawnień do użycia tej komendy!", ephemeral=True)
+        return
+
+    id_simona = 1135927904702845039
+    member = interaction.guild.get_member(id_simona)
+    if not member:
+        await interaction.response.send_message("Użytkownik nie został znaleziony na tym serwerze!", ephemeral=True)
+        return
+
+    try:
+        await member.timeout(discord.utils.utcnow() + timedelta(minutes=1), reason="Wyjeb simona command")
+        success_messages_simon = [
+            "rzucił/a zaklęcie na simona: Ryko i koko mute ci w oko!",
+            "rzucił/a zaklęcie na simona: Czary mary hokus poku simon spierdala jak ford focus!",
+            "wyjebał/a simona na minutę z czatu! ❤️",
+            "naprawił/a czat pozbywajac sie simona!",
+            "pozbył/a sie problemu na minute!",
+            "z archował/a simona na minute",
+            "dał/a kare simonowi za uzywanie minta!"
+        ]
+        await interaction.response.send_message(f"{interaction.user.mention} {random.choice(success_messages_simon)}",
+                                                ephemeral=False)
+    except discord.Forbidden:
+        await interaction.response.send_message("Nie mam uprawnień do timeoutowania tego użytkownika!", ephemeral=False)
+    except discord.HTTPException as e:
+        await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
+
 @bot.tree.command(name="wyjebmiska", description="Wyjeb miska na 1 minutę z czatu")
 @app_commands.default_permissions(moderate_members=True)
 async def wyjebmiska(interaction: discord.Interaction):
@@ -124,6 +155,5 @@ async def wyjebmiska(interaction: discord.Interaction):
         await interaction.response.send_message("Nie mam uprawnień do timeoutowania tego użytkownika!", ephemeral=False)
     except discord.HTTPException as e:
         await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
-
 
 bot.run(token)
