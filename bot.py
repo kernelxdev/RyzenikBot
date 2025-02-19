@@ -156,4 +156,17 @@ async def wyjebmiska(interaction: discord.Interaction):
     except discord.HTTPException as e:
         await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
 
+
+@bot.tree.command(name="mintdetected", description="I hate mint")
+@app_commands.default_permissions(moderate_members=True)
+async def mintDetected(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.moderate_members:
+        await interaction.response.send_message("Nie masz uprawnień do użycia tej komendy!", ephemeral=True)
+        return
+
+    try:
+        await interaction.response.send_message("Mint detected\nopinion rejected",
+                                                ephemeral=False)
+    except discord.HTTPException as e:
+        await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
 bot.run(token)
