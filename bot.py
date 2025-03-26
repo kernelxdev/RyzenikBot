@@ -127,6 +127,38 @@ async def wyjebsimona(interaction: discord.Interaction):
     except discord.HTTPException as e:
         await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
 
+@bot.tree.command(name="wyjebpieczarka", description="Wyjeb pieczarka na 1 minutę z czatu")
+@app_commands.default_permissions(moderate_members=True)
+async def wyjebpieczarka(interaction: discord.Interaction):
+    if not interaction.user.guild_permissions.moderate_members:
+        await interaction.response.send_message("Nie masz uprawnień do użycia tej komendy!", ephemeral=True)
+        return
+
+    id_pieczarka = 1090356556589174794
+    member = interaction.guild.get_member(id_pieczarka)
+    if not member:
+        await interaction.response.send_message("Użytkownik nie został znaleziony na tym serwerze!", ephemeral=True)
+        return
+
+    try:
+        await member.timeout(discord.utils.utcnow() + timedelta(minutes=1), reason="Wyjeb pieczarka command")
+        success_messages_pieczarek = [
+            "rzucił/a zaklęcie na pieczarka: Ryko i koko mute ci w oko!",
+            "rzucił/a zaklęcie na pieczarka: Czary mary hokus poku pieczarek spierdala jak ford focus!",
+            "wyjebał/a pieczarka na minutę z czatu! ❤️",
+            "naprawił/a czat pozbywajac sie pieczarka!",
+            "pozbył/a sie prob lemu na minute!",
+            "przestraszył/a pieczarka kodem na minute",
+            "dał/a kare pieczarkowi za zbyt mala ilosc wysylanego koduu na <#1232674301493383229>"
+        ]
+        await interaction.response.send_message(f"{interaction.user.mention} {random.choice(success_messages_pieczarek)}",
+                                                ephemeral=False)
+    except discord.Forbidden:
+        await interaction.response.send_message("Nie mam uprawnień do timeoutowania tego użytkownika!", ephemeral=False)
+    except discord.HTTPException as e:
+        await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
+
+"""
 @bot.tree.command(name="wyjebmiska", description="Wyjeb miska na 1 minutę z czatu")
 @app_commands.default_permissions(moderate_members=True)
 async def wyjebmiska(interaction: discord.Interaction):
@@ -155,6 +187,7 @@ async def wyjebmiska(interaction: discord.Interaction):
         await interaction.response.send_message("Nie mam uprawnień do timeoutowania tego użytkownika!", ephemeral=False)
     except discord.HTTPException as e:
         await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
+"""
 
 @bot.tree.command(name="mintdetected", description="I hate mint")
 @app_commands.default_permissions(moderate_members=True)
