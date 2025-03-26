@@ -144,10 +144,10 @@ async def wyjebpieczarka(interaction: discord.Interaction):
         await member.timeout(discord.utils.utcnow() + timedelta(minutes=1), reason="Wyjeb pieczarka command")
         success_messages_pieczarek = [
             "rzucił/a zaklęcie na pieczarka: Ryko i koko mute ci w oko!",
-            "rzucił/a zaklęcie na pieczarka: Czary mary hokus poku pieczarek spierdala jak ford focus!",
+            #"rzucił/a zaklęcie na pieczarka: Czary mary hokus poku pieczarek spierdala jak ford focus!",
             "wyjebał/a pieczarka na minutę z czatu! ❤️",
             "naprawił/a czat pozbywajac sie pieczarka!",
-            "pozbył/a sie prob lemu na minute!",
+            "pozbył/a sie problemu na minute!",
             "przestraszył/a pieczarka kodem na minute",
             "dał/a kare pieczarkowi za zbyt mala ilosc wysylanego koduu na <#1232674301493383229>"
         ]
