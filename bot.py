@@ -145,7 +145,7 @@ async def wyjebpieczarka(interaction: discord.Interaction):
         success_messages_pieczarek = [
             "rzucił/a zaklęcie na pieczarka: Ryko i koko mute ci w oko!",
             #"rzucił/a zaklęcie na pieczarka: Czary mary hokus poku pieczarek spierdala jak ford focus!",
-            "wyjebał/a pieczarka na minutę z czatu! ❤️",
+            "wywalił/a pieczarka na minutę z czatu! ❤️",
             "naprawił/a czat pozbywajac sie pieczarka!",
             "pozbył/a sie problemu na minute!",
             "przestraszył/a pieczarka kodem na minute",
