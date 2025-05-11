@@ -158,7 +158,6 @@ async def wyjebpieczarka(interaction: discord.Interaction):
     except discord.HTTPException as e:
         await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
 
-"""
 @bot.tree.command(name="wyjebmiska", description="Wyjeb miska na 1 minutę z czatu")
 @app_commands.default_permissions(moderate_members=True)
 async def wyjebmiska(interaction: discord.Interaction):
@@ -187,7 +186,6 @@ async def wyjebmiska(interaction: discord.Interaction):
         await interaction.response.send_message("Nie mam uprawnień do timeoutowania tego użytkownika!", ephemeral=False)
     except discord.HTTPException as e:
         await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
-"""
 
 @bot.tree.command(name="mintdetected", description="I hate mint")
 @app_commands.default_permissions(moderate_members=True)
