@@ -222,6 +222,8 @@ SUCCESS_MESSAGES_WYJEB = [
     "dał/a kare {user} za zbyt mala ilosc wysylanego kodu!"
 ]
 
+mod_roles_id = 1015595282873987165
+
 @bot.tree.command(name="wyjeb", description="Wyjeb wybranego użytkownika na 1 minutę z czatu")
 @app_commands.default_permissions(moderate_members=True)
 @app_commands.describe(uzytkownik="Użytkownik do wyciszenia na 1 minutę")
@@ -232,6 +234,12 @@ async def wyjeb(interaction: discord.Interaction, uzytkownik: discord.Member):
         return
     if member == interaction.guild.me:
         await interaction.response.send_message("Nie mogę wyjebać samego siebie!", ephemeral=True)
+        return
+    if member == interaction.user:
+        await interaction.response.send_message("Nie możesz wyjebać samego siebie!", ephemeral=True)
+        return
+    if member.get_role(mod_roles_id):
+        await interaction.response.send_message("Nie możesz wyjebać moderatora!", ephemeral=True)
         return
     try:
         if not interaction.guild.me.guild_permissions.moderate_members or interaction.guild.me.top_role <= member.top_role:
