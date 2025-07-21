@@ -9,7 +9,7 @@ import os
 import datetime
 import asyncio
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix="r?", intents=discord.Intents.all())
 
 LEVELS_FILE = 'levels.json'
 if os.path.exists(LEVELS_FILE):
@@ -44,7 +44,6 @@ def save_config():
     with open(CONFIG_FILE, 'w') as f:
         json.dump(config, f, indent=4)
 
-
 async def send_log_message(message_content: str):
     log_channel_id = config.get('log_channel_id')
     if log_channel_id is None:
@@ -64,7 +63,6 @@ async def send_log_message(message_content: str):
         print(f"Brak uprawnień do wysyłania wiadomości w kanale logów (ID: {log_channel_id}).")
     except discord.HTTPException as e:
         print(f"Błąd HTTP podczas wysyłania logu do kanału (ID: {log_channel_id}): {e}")
-
 
 def required_xp(level):
     return level * 100
@@ -87,7 +85,6 @@ async def on_ready():
     except Exception as e:
         print(f"Nie udało się zsynchronizować komend: {e}")
 
-
 @bot.event
 async def on_message(message: discord.Message):
     if message.author.bot:
@@ -103,13 +100,12 @@ async def on_message(message: discord.Message):
         new_level, _ = calculate_level(levels[user_id]['xp'])
 
         if new_level > old_level:
-             if new_level > 1:
-                  await message.channel.send(f"{message.author.mention} awansował/a na poziom {new_level}!")
+            if new_level > 1:
+                await message.channel.send(f"{message.author.mention} awansował/a na poziom {new_level}!")
 
         save_levels()
 
     await bot.process_commands(message)
-
 
 @bot.event
 async def on_message_delete(message: discord.Message):
@@ -170,7 +166,6 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 
         await send_log_message("\n".join(log_message_parts))
 
-
 @bot.tree.command(name="level", description="Sprawdź swój aktualny poziom i XP")
 async def level(interaction: discord.Interaction, user: discord.User = None):
     target_user = user or interaction.user
@@ -185,7 +180,6 @@ async def level(interaction: discord.Interaction, user: discord.User = None):
         )
     else:
         await interaction.response.send_message(f"{target_user.name} nie ma jeszcze żadnego XP.", ephemeral=False)
-
 
 @bot.tree.command(name="leaderboard", description="Pokaż 10 użytkowników z największą ilością XP")
 async def leaderboard(interaction: discord.Interaction):
@@ -208,7 +202,6 @@ async def leaderboard(interaction: discord.Interaction):
 
     await interaction.response.send_message(leaderboard_text, ephemeral=False)
 
-
 @bot.tree.command(name="ustawkanalzlogami", description="Ustaw kanał do wysyłania logów bota (tylko dla administratorów)")
 @app_commands.default_permissions(administrator=True)
 @app_commands.describe(kanal="Kanał, do którego będą wysyłane logi")
@@ -217,106 +210,90 @@ async def set_log_channel(interaction: discord.Interaction, kanal: discord.TextC
     save_config()
     await interaction.response.send_message(f"Kanał logów został pomyślnie ustawiony na {kanal.mention}.", ephemeral=True)
 
+SUCCESS_MESSAGES_WYJEB = [
+    "rzucił/a zaklęcie: Ryko i koko mute ci w oko!",
+    "rzucił/a zaklęcie: Czary mary hokus poku {user} spierdala jak ford focus!",
+    "wyjebał/a {user} na minutę z czatu! ❤️",
+    "naprawił/a czat pozbywajac sie {user}!",
+    "pozbył/a sie problemu na minute!",
+    "zarchiwował/a {user} na minute",
+    "dał/a kare {user} za uzywanie minta!",
+    "przestraszył/a {user} kodem na minute",
+    "dał/a kare {user} za zbyt mala ilosc wysylanego kodu!"
+]
 
-@bot.tree.command(name="wyjebsimona", description="Wyjeb simona na 1 minutę z czatu")
+@bot.tree.command(name="wyjeb", description="Wyjeb wybranego użytkownika na 1 minutę z czatu")
 @app_commands.default_permissions(moderate_members=True)
-async def wyjebsimona(interaction: discord.Interaction):
-    id_simona = 1135927904702845039
-    member = interaction.guild.get_member(id_simona)
+@app_commands.describe(uzytkownik="Użytkownik do wyciszenia na 1 minutę")
+async def wyjeb(interaction: discord.Interaction, uzytkownik: discord.Member):
+    member = uzytkownik
     if not member:
-        await interaction.response.send_message("Użytkownik Simon nie został znaleziony na tym serwerze!", ephemeral=True)
+        await interaction.response.send_message("Nie znaleziono wskazanego użytkownika do wyjebania na tym serwerze!", ephemeral=True)
+        return
+    if member == interaction.guild.me:
+        await interaction.response.send_message("Nie mogę wyjebać samego siebie!", ephemeral=True)
+        return
+    try:
+        if not interaction.guild.me.guild_permissions.moderate_members or interaction.guild.me.top_role <= member.top_role:
+            await interaction.response.send_message("Nie mam wystarczających uprawnień, aby wyjebać tego użytkownika!", ephemeral=True)
+            return
+
+        await member.timeout(discord.utils.utcnow() + timedelta(minutes=1), reason=f"Wyjebany przez {interaction.user}")
+        msg = random.choice(SUCCESS_MESSAGES_WYJEB).replace("{user}", member.mention)
+        await interaction.response.send_message(f"{interaction.user.mention} {msg}", ephemeral=False)
+    except discord.Forbidden:
+        await interaction.response.send_message("Nie mam uprawnień do wypierdalania tego użytkownika!", ephemeral=True)
+    except discord.HTTPException as e:
+        await interaction.response.send_message(f"Wystąpił błąd HTTP: {e}", ephemeral=True)
+    except Exception as e:
+        await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=True)
+
+@bot.tree.command(name="mute", description="Wycisz użytkownika na określony czas")
+@app_commands.default_permissions(moderate_members=True)
+@app_commands.describe(uzytkownik="Użytkownik do wyciszenia", czas="Czas wyciszenia, np. 1s, 30m, 2h, 3d", powod="Powód wyciszenia (opcjonalnie)")
+async def mute(interaction: discord.Interaction, uzytkownik: discord.Member, czas: str, powod: str = "Brak powodu"):
+    def parse_time(time_str):
+        units = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+        time_str = time_str.lower()
+        num = ''
+        total_seconds = 0
+        for char in time_str:
+            if char.isdigit():
+                num += char
+            elif char in units and num:
+                total_seconds += int(num) * units[char]
+                num = ''
+            else:
+                return None
+        return total_seconds if total_seconds > 0 else None
+
+    if not uzytkownik:
+        await interaction.response.send_message("Nie znaleziono wskazanego użytkownika!", ephemeral=True)
+        return
+    if uzytkownik == interaction.guild.me:
+        await interaction.response.send_message("Nie mogę wyciszyć samego siebie!", ephemeral=True)
+        return
+    if uzytkownik.top_role >= interaction.guild.me.top_role:
+        await interaction.response.send_message("Nie mam uprawnień do wyciszenia tego użytkownika!", ephemeral=True)
+        return
+
+    seconds = parse_time(czas)
+    if seconds is None or seconds < 1 or seconds > 28 * 24 * 3600:
+        await interaction.response.send_message("Podaj poprawny czas wyciszenia (od 1s do 28d, np. 30m, 2h, 3d).", ephemeral=True)
         return
 
     try:
-        if not interaction.guild.me.guild_permissions.moderate_members or interaction.guild.me.top_role <= member.top_role:
-             await interaction.response.send_message("Nie mam wystarczających uprawnień, aby wyciszyć tego użytkownika!", ephemeral=False)
-             return
-
-        await member.timeout(discord.utils.utcnow() + timedelta(minutes=1), reason="Wyjeb simona command")
-        success_messages_simon = [
-            "rzucił/a zaklęcie na simona: Ryko i koko mute ci w oko!",
-            "rzucił/a zaklęcie na simona: Czary mary hokus poku simon spierdala jak ford focus!",
-            "wyjebał/a simona na minutę z czatu! ❤️",
-            "naprawił/a czat pozbywajac sie simona!",
-            "pozbył/a sie problemu na minute!",
-            "z archował/a simona na minute",
-            "dał/a kare simonowi za uzywanie minta!"
-        ]
-        await interaction.response.send_message(f"{interaction.user.mention} {random.choice(success_messages_simon)}",
-                                                ephemeral=False)
+        await uzytkownik.timeout(discord.utils.utcnow() + timedelta(seconds=seconds), reason=f"{powod} (wyciszone przez {interaction.user})")
+        await interaction.response.send_message(
+            f"{uzytkownik.mention} został/a wyciszony/a na {czas}.\nPowód: {powod}",
+            ephemeral=False
+        )
     except discord.Forbidden:
-        await interaction.response.send_message("Nie mam uprawnień do timeoutowania tego użytkownika (Discord Forbidden)!", ephemeral=False)
+        await interaction.response.send_message("Nie mam uprawnień do wyciszenia tego użytkownika!", ephemeral=True)
     except discord.HTTPException as e:
-        await interaction.response.send_message(f"Wystąpił błąd HTTP: {e}", ephemeral=False)
+        await interaction.response.send_message(f"Wystąpił błąd HTTP: {e}", ephemeral=True)
     except Exception as e:
-        await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=False)
-
-
-@bot.tree.command(name="wyjebpieczarka", description="Wyjeb pieczarka na 1 minutę z czatu")
-@app_commands.default_permissions(moderate_members=True)
-async def wyjebpieczarka(interaction: discord.Interaction):
-    id_pieczarka = 1090356556589174794
-    member = interaction.guild.get_member(id_pieczarka)
-    if not member:
-        await interaction.response.send_message("Użytkownik Pieczarek nie został znaleziony na tym serwerze!", ephemeral=True)
-        return
-
-    try:
-        if not interaction.guild.me.guild_permissions.moderate_members or interaction.guild.me.top_role <= member.top_role:
-             await interaction.response.send_message("Nie mam wystarczających uprawnień, aby wyciszyć tego użytkownika!", ephemeral=False)
-             return
-
-        await member.timeout(discord.utils.utcnow() + timedelta(minutes=1), reason="Wyjeb pieczarka command")
-        success_messages_pieczarek = [
-            "rzucił/a zaklęcie na pieczarka: Ryko i koko mute ci w oko!",
-            #"rzucił/a zaklęcie na pieczarka: Czary mary hokus poku pieczarek spierdala jak ford focus!",
-            "wywalił/a pieczarka na minutę z czatu! ❤️",
-            "naprawił/a czat pozbywajac sie pieczarka!",
-            "pozbył/a sie problemu na minute!",
-            "przestraszył/a pieczarka kodem na minute",
-            "dał/a kare pieczarkowi za zbyt mala ilosc wysylanego koduu na <#1232674301493383229>"
-        ]
-        await interaction.response.send_message(f"{interaction.user.mention} {random.choice(success_messages_pieczarek)}",
-                                                ephemeral=False)
-    except discord.Forbidden:
-        await interaction.response.send_message("Nie mam uprawnień do timeoutowania tego użytkownika (Discord Forbidden)!", ephemeral=False)
-    except discord.HTTPException as e:
-        await interaction.response.send_message(f"Wystąpił błąd HTTP: {e}", ephemeral=False)
-    except Exception as e:
-        await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=False)
-
-
-@bot.tree.command(name="wyjebmiska", description="Wyjeb miska na 1 minutę z czatu")
-@app_commands.default_permissions(moderate_members=True)
-async def wyjebmiska(interaction: discord.Interaction):
-    id_miska = 1103907600120156272
-    member = interaction.guild.get_member(id_miska)
-    if not member:
-        await interaction.response.send_message("Użytkownik Miska nie został znaleziony na tym serwerze!", ephemeral=True)
-        return
-
-    try:
-        if not interaction.guild.me.guild_permissions.moderate_members or interaction.guild.me.top_role <= member.top_role:
-             await interaction.response.send_message("Nie mam wystarczających uprawnień, aby wyciszyć tego użytkownika!", ephemeral=False)
-             return
-
-        await member.timeout(discord.utils.utcnow() + timedelta(minutes=1), reason="Wyjeb miska command")
-        success_messages = [
-            "rzucił/a zaklęcie na miska: Ryko i koko mute ci w oko!",
-            "rzucił/a zaklęcie na miska: Czary mary hokus poku placek spierdala jak ford focus!",
-            "wyjebał/a miska na minutę z czatu! ❤️",
-            "naprawił/a czat pozbywajac sie miska!",
-            "pozbył/a sie problemu na minute!"
-        ]
-        await interaction.response.send_message(f"{interaction.user.mention} {random.choice(success_messages)}",
-                                                ephemeral=False)
-    except discord.Forbidden:
-        await interaction.response.send_message("Nie mam uprawnień do timeoutowania tego użytkownika (Discord Forbidden)!", ephemeral=False)
-    except discord.HTTPException as e:
-        await interaction.response.send_message(f"Wystąpił błąd HTTP: {e}", ephemeral=False)
-    except Exception as e:
-        await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=False)
-
+        await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=True)
 
 @bot.tree.command(name="mintdetected", description="I hate mint")
 @app_commands.default_permissions(moderate_members=True)
@@ -328,8 +305,5 @@ async def mintDetected(interaction: discord.Interaction):
     except Exception as e:
         await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=False)
 
-
 load_config()
-
-
 bot.run(token)
