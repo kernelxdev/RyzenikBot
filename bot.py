@@ -239,7 +239,7 @@ async def wyjeb(interaction: discord.Interaction, uzytkownik: discord.Member):
     if member == interaction.user:
         await interaction.response.send_message("Nie możesz wyjebać samego siebie!", ephemeral=True)
         return
-    if member.get_role(mod_role_id) and interaction.user.get_role(sigmamod_role_id):
+    if member.get_role(mod_role_id) and not interaction.user.get_role(sigmamod_role_id):
         await interaction.response.send_message("Nie możesz wyjebać moderatora!", ephemeral=True)
         return
     try:
