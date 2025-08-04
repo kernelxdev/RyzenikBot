@@ -18,13 +18,16 @@ if os.path.exists(LEVELS_FILE):
 else:
     levels = {}
 
+
 def save_levels():
     with open(LEVELS_FILE, 'w') as f:
         json.dump(levels, f)
 
+
 CONFIG_FILE = 'config.json'
 DEFAULT_CONFIG = {'log_channel_id': None}
 config = {}
+
 
 def load_config():
     global config
@@ -40,9 +43,11 @@ def load_config():
         config = DEFAULT_CONFIG
         save_config()
 
+
 def save_config():
     with open(CONFIG_FILE, 'w') as f:
         json.dump(config, f, indent=4)
+
 
 async def send_log_message(message_content: str):
     log_channel_id = config.get('log_channel_id')
@@ -64,8 +69,10 @@ async def send_log_message(message_content: str):
     except discord.HTTPException as e:
         print(f"Błąd HTTP podczas wysyłania logu do kanału (ID: {log_channel_id}): {e}")
 
+
 def required_xp(level):
     return level * 100
+
 
 def calculate_level(xp):
     level = 1
@@ -73,6 +80,7 @@ def calculate_level(xp):
         xp -= required_xp(level)
         level += 1
     return level, xp
+
 
 @bot.event
 async def on_ready():
@@ -84,6 +92,7 @@ async def on_ready():
         print(f"Zsynchronizowano {len(synced)} komend(y)")
     except Exception as e:
         print(f"Nie udało się zsynchronizować komend: {e}")
+
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -107,6 +116,7 @@ async def on_message(message: discord.Message):
 
     await bot.process_commands(message)
 
+
 @bot.event
 async def on_message_delete(message: discord.Message):
     if message.author.bot:
@@ -126,6 +136,7 @@ async def on_message_delete(message: discord.Message):
         f"Treść: ```{content}```"
     )
     await send_log_message(log_message)
+
 
 @bot.event
 async def on_member_update(before: discord.Member, after: discord.Member):
@@ -166,6 +177,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 
         await send_log_message("\n".join(log_message_parts))
 
+
 @bot.tree.command(name="level", description="Sprawdź swój aktualny poziom i XP")
 async def level(interaction: discord.Interaction, user: discord.User = None):
     target_user = user or interaction.user
@@ -180,6 +192,7 @@ async def level(interaction: discord.Interaction, user: discord.User = None):
         )
     else:
         await interaction.response.send_message(f"{target_user.name} nie ma jeszcze żadnego XP.", ephemeral=False)
+
 
 @bot.tree.command(name="leaderboard", description="Pokaż 10 użytkowników z największą ilością XP")
 async def leaderboard(interaction: discord.Interaction):
@@ -202,13 +215,17 @@ async def leaderboard(interaction: discord.Interaction):
 
     await interaction.response.send_message(leaderboard_text, ephemeral=False)
 
-@bot.tree.command(name="ustawkanalzlogami", description="Ustaw kanał do wysyłania logów bota (tylko dla administratorów)")
+
+@bot.tree.command(name="ustawkanalzlogami",
+                  description="Ustaw kanał do wysyłania logów bota (tylko dla administratorów)")
 @app_commands.default_permissions(administrator=True)
 @app_commands.describe(kanal="Kanał, do którego będą wysyłane logi")
 async def set_log_channel(interaction: discord.Interaction, kanal: discord.TextChannel):
     config['log_channel_id'] = kanal.id
     save_config()
-    await interaction.response.send_message(f"Kanał logów został pomyślnie ustawiony na {kanal.mention}.", ephemeral=True)
+    await interaction.response.send_message(f"Kanał logów został pomyślnie ustawiony na {kanal.mention}.",
+                                            ephemeral=True)
+
 
 SUCCESS_MESSAGES_WYJEB = [
     "rzucił/a zaklęcie: Ryko i koko mute ci w oko!",
@@ -221,9 +238,13 @@ SUCCESS_MESSAGES_WYJEB = [
     "przestraszył/a {user} kodem na minute",
     "dał/a kare {user} za zbyt mala ilosc wysylanego kodu!"
 ]
-
+SUCCES_MUTE_MESSAGE = [
+    "wyciszył/a {user}",
+]
 mod_role_id = 1203714318235992064
 sigmamod_role_id = 1333189890447249429
+mutes_file = 'users_mutes.json'
+mute_levels = [30,60,180,720,1440,10080,30240] #Czasy podane w minutach
 
 @bot.tree.command(name="wyjeb", description="Wyjeb wybranego użytkownika na 1 minutę z czatu")
 @app_commands.default_permissions(moderate_members=True)
@@ -231,7 +252,8 @@ sigmamod_role_id = 1333189890447249429
 async def wyjeb(interaction: discord.Interaction, uzytkownik: discord.Member):
     member = uzytkownik
     if not member:
-        await interaction.response.send_message("Nie znaleziono wskazanego użytkownika do wyjebania na tym serwerze!", ephemeral=True)
+        await interaction.response.send_message("Nie znaleziono wskazanego użytkownika do wyjebania na tym serwerze!",
+                                                ephemeral=True)
         return
     if member == interaction.guild.me:
         await interaction.response.send_message("Nie mogę wyjebać samego siebie!", ephemeral=True)
@@ -244,7 +266,8 @@ async def wyjeb(interaction: discord.Interaction, uzytkownik: discord.Member):
         return
     try:
         if not interaction.guild.me.guild_permissions.moderate_members or interaction.guild.me.top_role <= member.top_role:
-            await interaction.response.send_message("Nie mam wystarczających uprawnień, aby wyjebać tego użytkownika!", ephemeral=True)
+            await interaction.response.send_message("Nie mam wystarczających uprawnień, aby wyjebać tego użytkownika!",
+                                                    ephemeral=True)
             return
 
         await member.timeout(discord.utils.utcnow() + timedelta(minutes=1), reason=f"Wyjebany przez {interaction.user}")
@@ -257,9 +280,101 @@ async def wyjeb(interaction: discord.Interaction, uzytkownik: discord.Member):
     except Exception as e:
         await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=True)
 
+def getMuteLevel(user_id):
+    try:
+        with open(mutes_file, 'r') as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return 0
+    return data.get(user_id, {}).get('mute_level', -1)
+
+def getLastMute(user_id):
+    try:
+        with open(mutes_file, 'r') as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return -1
+    return data.get(user_id, {}).get('last_mute', -1)
+
+def saveMute(user_id, user_name, mute_level):
+    if os.path.exists(mutes_file):
+        try:
+            with open(mutes_file, 'r') as f:
+                data = json.load(f)
+        except json.JSONDecodeError:
+            data = {}
+    else:
+        data = {}
+
+    data[user_id] = {
+        "name": user_name,
+        "last_mute": datetime.datetime.now().isoformat(),
+        "mute_level": mute_level
+    }
+    with open(mutes_file, 'w') as f:
+        json.dump(data, f, indent=4)
+
+@bot.tree.command(name="warn", description="Wycisz użytkownika na określony czas")
+@app_commands.default_permissions(moderate_members=True)
+@app_commands.describe(uzytkownik="Użytkownik do wyciszenia", powod="Powód wyciszenia (opcjonalnie)")
+async def warn(interaction: discord.Interaction, uzytkownik: discord.Member, powod: str = "Brak powodu"):
+    member = uzytkownik
+    if not member:
+        await interaction.response.send_message("Nie znaleziono wskazanego użytkownika do wyjebania na tym serwerze!",
+                                                ephemeral=True)
+        return
+    if member == interaction.guild.me or member == interaction.user:
+        await interaction.response.send_message("Nie możesz warnować samego siebie!", ephemeral=True)
+        return
+    if member.get_role(mod_role_id) and not interaction.user.get_role(sigmamod_role_id):
+        await interaction.response.send_message("Nie możesz wyjebać moderatora!", ephemeral=True)
+        return
+    try:
+        if not interaction.guild.me.guild_permissions.moderate_members or interaction.guild.me.top_role <= member.top_role:
+            await interaction.response.send_message("Nie mam wystarczających uprawnień, aby wyjebać tego użytkownika!",
+                                                    ephemeral=True)
+            return
+
+        target_user = uzytkownik or interaction.user
+        user_id = str(target_user.id)
+        currentMuteLevel = getMuteLevel(user_id)
+        last_mute_str = getLastMute(user_id)
+
+        if last_mute_str == -1:
+            newMuteLevel = 1
+        elif datetime.datetime.fromisoformat(last_mute_str) < datetime.datetime.now() - timedelta(days=7):
+            newMuteLevel = 1
+        else:
+            newMuteLevel = currentMuteLevel + 1
+
+        muteLevelIndex = min(newMuteLevel - 1, len(mute_levels) - 1)
+        muteTime = mute_levels[muteLevelIndex]
+
+        saveMute(user_id, target_user.name, newMuteLevel)
+        msg = random.choice(SUCCES_MUTE_MESSAGE).replace("{user}", member.mention)
+        if muteTime > 60 * 24:
+            days = muteTime // (60 * 24)
+            msg += f" na {days} dni"
+        elif(muteTime > 60):
+            minutes = muteTime // 60
+            msg += f" na {minutes} godzin/e/y"
+        else:
+            msg += f" na {muteTime} minut"
+        await member.timeout(discord.utils.utcnow() + timedelta(minutes=muteTime), reason=f"Wyjebany przez {interaction.user}")
+        await interaction.response.send_message(f"{interaction.user.mention} {msg}", ephemeral=False)
+
+    except discord.Forbidden:
+        await interaction.response.send_message("Nie mam uprawnień do wypierdalania tego użytkownika!", ephemeral=True)
+    except discord.HTTPException as e:
+        await interaction.response.send_message(f"Wystąpił błąd HTTP: {e}", ephemeral=True)
+    except Exception as e:
+        await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=True)
+
+
 @bot.tree.command(name="mute", description="Wycisz użytkownika na określony czas")
 @app_commands.default_permissions(moderate_members=True)
-@app_commands.describe(uzytkownik="Użytkownik do wyciszenia", czas="Czas wyciszenia, np. 1s, 30m, 2h, 3d", powod="Powód wyciszenia (opcjonalnie)")
+@app_commands.describe(uzytkownik="Użytkownik do wyciszenia", czas="Czas wyciszenia, np. 1s, 30m, 2h, 3d",
+                       powod="Powód wyciszenia (opcjonalnie)")
 async def mute(interaction: discord.Interaction, uzytkownik: discord.Member, czas: str, powod: str = "Brak powodu"):
     def parse_time(time_str):
         units = {"s": 1, "m": 60, "h": 3600, "d": 86400}
@@ -288,11 +403,13 @@ async def mute(interaction: discord.Interaction, uzytkownik: discord.Member, cza
 
     seconds = parse_time(czas)
     if seconds is None or seconds < 1 or seconds > 28 * 24 * 3600:
-        await interaction.response.send_message("Podaj poprawny czas wyciszenia (od 1s do 28d, np. 30m, 2h, 3d).", ephemeral=True)
+        await interaction.response.send_message("Podaj poprawny czas wyciszenia (od 1s do 28d, np. 30m, 2h, 3d).",
+                                                ephemeral=True)
         return
 
     try:
-        await uzytkownik.timeout(discord.utils.utcnow() + timedelta(seconds=seconds), reason=f"{powod} (wyciszone przez {interaction.user})")
+        await uzytkownik.timeout(discord.utils.utcnow() + timedelta(seconds=seconds),
+                                 reason=f"{powod} (wyciszone przez {interaction.user})")
         await interaction.response.send_message(
             f"{uzytkownik.mention} został/a wyciszony/a na {czas}.\nPowód: {powod}",
             ephemeral=False
@@ -304,6 +421,7 @@ async def mute(interaction: discord.Interaction, uzytkownik: discord.Member, cza
     except Exception as e:
         await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=True)
 
+
 @bot.tree.command(name="mintdetected", description="I hate mint")
 @app_commands.default_permissions(moderate_members=True)
 async def mintDetected(interaction: discord.Interaction):
@@ -313,6 +431,7 @@ async def mintDetected(interaction: discord.Interaction):
         await interaction.response.send_message(f"Wystąpił błąd: {e}", ephemeral=False)
     except Exception as e:
         await interaction.response.send_message(f"Wystąpił nieoczekiwany błąd: {e}", ephemeral=False)
+
 
 load_config()
 bot.run(token)
